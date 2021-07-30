@@ -321,22 +321,22 @@ class PostgresEngine extends Engine
     public function map(Builder $builder, $results, $model)
     {
         if (empty($results)) {
-            return Collection::make();
+            return $model->newCollection();
         }
-
-        $keys = $this->mapIds($results);
 
         $results = collect($results);
 
-        $models = $model->whereIn($model->getKeyName(), $keys->all())
-            ->get()
-            ->keyBy($model->getKeyName());
+        $objectIds = $results->pluck($model->getKeyName())->values()->all();
 
-        return $results->pluck($model->getKeyName())
-            ->intersect($models->keys()) // Filter out no longer existing models (i.e. soft deleted)
-            ->map(function ($key) use ($models) {
-                return $models[$key];
-            });
+        $objectIdPositions = array_flip($objectIds);
+
+        return $model->getScoutModelsByIds(
+            $builder, $objectIds
+        )->filter(function ($model) use ($objectIds) {
+            return in_array($model->getScoutKey(), $objectIds);
+        })->sortBy(function ($model) use ($objectIdPositions) {
+            return $objectIdPositions[$model->getScoutKey()];
+        })->values();
     }
 
     /**
