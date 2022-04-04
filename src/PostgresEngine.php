@@ -597,7 +597,4 @@ class PostgresEngine extends Engine
             ->table($model->searchableAs())
             ->update([$indexColumn => null]);
     }
-    public function lazyMap(Builder $builder, $results, $model) {}
-    public function createIndex($name, array $options = []){}
-    public function deleteIndex($name){}
 }
